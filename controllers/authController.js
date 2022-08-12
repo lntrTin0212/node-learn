@@ -15,6 +15,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   const newUser = await User.create({
     name: req.body.name,
     email: req.body.email,
+    role: req.body.role,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
     passwordChangeAt: req.body.passwordChangeAt
@@ -77,9 +78,9 @@ exports.protect = catchAsync(async (req, res, next) => {
   // 2 Vertification token
   const decoded = await promisify(jwt.verify)(token, process.env.JTW_SECRET);
   // 3 check if user still exists
-  const freshUser = await User.findById(decoded.id);
-  // console.log(freshUser);
-  if (!freshUser) {
+  const currentUser = await User.findById(decoded.id);
+  // console.log(currentUser);
+  if (!currentUser) {
     return next(
       new AppError(
         'the user belonging to this token does no longer exist.',
@@ -89,7 +90,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
   // 4 Check if user changed password after the token was issued
   // iat: JWTTimeStamp
-  if (await freshUser.changedPasswordAfter(decoded.iat)) {
+  if (await currentUser.changedPasswordAfter(decoded.iat)) {
     // console.log('oh no!. User recently changed password!, please log in again');
     return next(
       new AppError(
@@ -99,6 +100,17 @@ exports.protect = catchAsync(async (req, res, next) => {
     );
   }
   // Grant access to proteced route
-  req.user = freshUser;
+  req.user = currentUser;
   next();
 });
+
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError('You do not have permission to perform this action', 403)
+      );
+    }
+    next();
+  };
+};
