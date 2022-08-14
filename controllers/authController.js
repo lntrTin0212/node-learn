@@ -84,7 +84,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   if (!currentUser) {
     return next(
       new AppError(
-        'the user belonging to this token does no longer exist.',
+        'the user belonging to this token do es no longer exist.',
         401
       )
     );
