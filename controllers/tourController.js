@@ -42,7 +42,7 @@ exports.getTour = catchAsync(async (req, res, next) => {
     }
   });
 });
-
+// 154
 exports.createTour = catchAsync(async (req, res, next) => {
   const newTour = await Tour.create(req.body);
 
